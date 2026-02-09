@@ -1,0 +1,423 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>Comet Clicker – Cheaper Prices Fixed</title>
+
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+
+body{
+  margin:0;
+  background:radial-gradient(circle at bottom,#050510,#000);
+  color:white;
+  font-family:'Orbitron',sans-serif;
+  display:flex;
+  height:100vh;
+  overflow:hidden;
+}
+
+
+#leftPanel{
+  width:220px;
+  background:rgba(0,0,0,0.6);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-y:auto;
+}
+
+
+#gameArea{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding-top:20px;
+}
+
+
+#shop{
+  width:260px;
+  background:rgba(0,0,0,0.65);
+  padding:10px;
+  overflow-y:auto;
+}
+
+
+.panel{
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(6px);
+  border-radius:16px;
+  padding:16px;
+  margin:8px;
+  width:180px;
+  text-align:center;
+}
+
+
+#comet{
+  width:120px;
+  height:120px;
+  margin:20px auto;
+  border-radius:50%;
+  cursor:pointer;
+  background:radial-gradient(circle,#fff,#ffcc00,transparent);
+  box-shadow:0 0 20px #ffcc00,0 0 40px #ff8800;
+  transition:0.2s;
+}
+
+
+#comet.galaxy{
+  animation: rainbowPulse 2s infinite alternate;
+}
+
+
+@keyframes rainbowPulse{
+  0% { background: radial-gradient(circle,#fff,#ff00aa,#00ffff,transparent); box-shadow:0 0 20px #ff00aa,0 0 40px #00ffff;}
+  50% { background: radial-gradient(circle,#fff,#00ffdd,#aa00ff,transparent); box-shadow:0 0 20px #00ffdd,0 0 40px #aa00ff;}
+  100% { background: radial-gradient(circle,#fff,#ff00aa,#00ffff,transparent); box-shadow:0 0 20px #ff00aa,0 0 40px #00ffff;}
+}
+
+
+button{
+  width:160px;
+  margin:6px;
+  padding:10px;
+  font-family:'Orbitron',sans-serif;
+  border-radius:10px;
+  border:none;
+}
+
+
+.afford{ background:#0a3; color:white; }
+.cant{ background:#600; color:#faa; }
+
+
+.float{
+  position:absolute;
+  color:#ffeb3b;
+  animation:up 1s forwards;
+}
+
+
+@keyframes up{
+  from{opacity:1;transform:translateY(0)}
+  to{opacity:0;transform:translateY(-60px)}
+}
+
+
+#statsPage{display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);}
+.star{position:absolute;background:white;border-radius:50%;animation:twinkle 3s infinite alternate;}
+</style>
+</head>
+
+
+<body>
+<div id="leftPanel">
+<h2>UPGRADES</h2>
+<button id="upClick"></button>
+<button id="upAuto"></button>
+<button id="upMega"></button>
+<button id="upMegaClick"></button>
+<button id="upSuperAuto"></button>
+<button id="upCosmicBoost"></button>
+</div>
+
+
+<div id="gameArea">
+<h1>☄ COMET CLICKER ☄</h1>
+
+
+<div class="panel">
+Points: <span id="score">0</span><br>
+Per Click: <span id="click">5</span><br>
+Per Second: <span id="auto">1</span><br>
+Multiplier: <span id="multi">1x</span>
+</div>
+
+
+<div id="comet"></div>
+<button id="rebirthBtn">REBIRTH</button>
+<button onclick="openStats()">📊 STATS</button>
+
+
+<div class="panel" id="statsPage">
+<h2>PLAYER STATS</h2>
+Time Played: <span id="s_time">0</span><br>
+Total Clicks: <span id="s_clicks">0</span><br>
+Total Points Earned: <span id="s_points">0</span><br>
+Total Rebirths: <span id="s_rebirths">0</span><br>
+<button onclick="closeStats()">BACK</button>
+</div>
+</div>
+
+
+<div id="shop">
+<h2>🎨 COMET SHOP</h2>
+<div id="shopList"></div>
+</div>
+
+
+<audio id="clickSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+<audio id="starSound" src="https://freesound.org/data/previews/466/466148_10369514-lq.mp3"></audio>
+
+
+<script>
+// STARS BACKGROUND
+for(let i=0;i<100;i++){
+  let s=document.createElement('div');
+  s.className='star';
+  s.style.width=s.style.height=Math.random()*2+1+'px';
+  s.style.left=Math.random()*window.innerWidth+'px';
+  s.style.top=Math.random()*window.innerHeight+'px';
+  document.body.appendChild(s);
+}
+
+
+// ELEMENTS
+const scoreSpan=document.getElementById('score');
+const clickSpan=document.getElementById('click');
+const autoSpan=document.getElementById('auto');
+const multiSpan=document.getElementById('multi');
+
+
+const upClick=document.getElementById('upClick');
+const upAuto=document.getElementById('upAuto');
+const upMega=document.getElementById('upMega');
+const upMegaClick=document.getElementById('upMegaClick');
+const upSuperAuto=document.getElementById('upSuperAuto');
+const upCosmicBoost=document.getElementById('upCosmicBoost');
+const rebirthBtn=document.getElementById('rebirthBtn');
+
+
+const comet=document.getElementById('comet');
+const shopList=document.getElementById('shopList');
+
+
+const statsPage=document.getElementById('statsPage');
+const s_time=document.getElementById('s_time');
+const s_clicks=document.getElementById('s_clicks');
+const s_points=document.getElementById('s_points');
+const s_rebirths=document.getElementById('s_rebirths');
+
+
+const clickSound=document.getElementById('clickSound');
+const starSound=document.getElementById('starSound');
+
+
+// GAME DATA – CHEAPER PRICES FIXED
+let score=0, clickValue=5, autoValue=1;
+
+
+// ✅ NEW CHEAPER PRICES
+let priceClick=5, priceAuto=10, priceMega=25;
+let multiplier=1, rebirthPrice=500000;
+let priceMegaClick=250000, priceSuperAuto=500000, priceCosmicBoost=1000000;
+
+
+let stat_time=0, stat_clicks=0, stat_totalPoints=0, stat_rebirths=0;
+
+
+const colors=[
+  {name:"Classic", style:"radial-gradient(circle,#fff,#ffcc00,transparent)", price:0},
+  {name:"Blue Ice", style:"radial-gradient(circle,#fff,#00ccff,transparent)", price:10000},
+  {name:"Toxic", style:"radial-gradient(circle,#fff,#00ff00,transparent)", price:250000},
+  {name:"Fire", style:"radial-gradient(circle,#fff,#ff3300,transparent)", price:450000},
+  {name:"Purple", style:"radial-gradient(circle,#fff,#aa00ff,transparent)", price:1200000},
+  {name:"Galaxy", style:"radial-gradient(circle,#fff,#ff00aa,#00ffff,transparent)", price:10000000}
+];
+
+
+let owned=["Classic"], currentColor="Classic";
+
+
+function fNum(n){
+  if(n>=1e6) return (n/1e6).toFixed(1)+"M";
+  if(n>=1e3) return (n/1e3).toFixed(1)+"k";
+  return Math.floor(n);
+}
+
+
+function floatText(n,x,y){
+  let f=document.createElement('div');
+  f.className='float';
+  f.textContent='+'+fNum(n);
+  f.style.left=x+'px'; f.style.top=y+'px';
+  document.body.appendChild(f);
+  setTimeout(()=>f.remove(),1000);
+}
+
+
+function renderShop(){
+  shopList.innerHTML="";
+  colors.forEach(c=>{
+    let div=document.createElement('div');
+    div.className="shopItem";
+    let btn=document.createElement('button');
+
+
+    if(owned.includes(c.name)){
+      btn.textContent=currentColor===c.name?"EQUIPPED":"Select "+c.name;
+      btn.className="afford";
+      btn.onclick=()=>{ currentColor=c.name; applyColor(); renderShop(); save(); };
+    }else{
+      let need=Math.max(0,c.price-score);
+      btn.textContent=c.name+" – "+fNum(c.price)+(need>0?" (Need "+fNum(need)+")":"");
+      btn.className=score>=c.price?"afford":"cant";
+      btn.onclick=()=>{ if(score>=c.price){score-=c.price; owned.push(c.name); currentColor=c.name; applyColor(); update(); save(); renderShop(); }}
+    }
+    div.appendChild(btn);
+    shopList.appendChild(div);
+  });
+}
+
+
+function applyColor(){
+  let c=colors.find(x=>x.name===currentColor);
+  if(c){ comet.style.background=c.style; comet.className=currentColor==="Galaxy"?"galaxy":""; }
+}
+
+
+function update(){
+  scoreSpan.textContent=fNum(score);
+  clickSpan.textContent=fNum(clickValue*multiplier);
+  autoSpan.textContent=fNum(autoValue*multiplier);
+  multiSpan.textContent=multiplier+"x";
+
+
+  const upgrades=[
+    {btn:upClick, price:priceClick, label:"Upgrade Click"},
+    {btn:upAuto, price:priceAuto, label:"Upgrade Auto"},
+    {btn:upMega, price:priceMega, label:"Mega Upgrade"},
+    {btn:upMegaClick, price:priceMegaClick, label:"Mega Click"},
+    {btn:upSuperAuto, price:priceSuperAuto, label:"Super Auto"},
+    {btn:upCosmicBoost, price:priceCosmicBoost, label:"Cosmic Boost"}
+  ];
+
+
+  upgrades.forEach(u=>{
+    let need=Math.floor(u.price-score);
+    u.btn.textContent=u.label+" – "+fNum(u.price)+(need>0?" (Need "+fNum(need)+")":"");
+    u.btn.className=score>=u.price?"afford":"cant";
+  });
+
+
+  rebirthBtn.textContent="REBIRTH – "+fNum(rebirthPrice);
+  rebirthBtn.className=score>=rebirthPrice?"afford":"cant";
+
+
+  renderShop();
+}
+
+
+// SAVE / LOAD
+function save(){ 
+  localStorage.setItem('cc_save',JSON.stringify({
+    score, clickValue, autoValue, priceClick, priceAuto, priceMega, multiplier, rebirthPrice,
+    priceMegaClick, priceSuperAuto, priceCosmicBoost,
+    owned, currentColor, stat_time, stat_clicks, stat_totalPoints, stat_rebirths
+  })); 
+}
+
+
+function load(){
+  let d=JSON.parse(localStorage.getItem('cc_save')||"{}");
+  score=d.score||0; clickValue=d.clickValue||5; autoValue=d.autoValue||1;
+  priceClick=d.priceClick||5; priceAuto=d.priceAuto||10; priceMega=d.priceMega||25;
+  multiplier=d.multiplier||1; rebirthPrice=d.rebirthPrice||500000;
+
+
+  priceMegaClick=d.priceMegaClick||250000;
+  priceSuperAuto=d.priceSuperAuto||500000;
+  priceCosmicBoost=d.priceCosmicBoost||1000000;
+
+
+  owned=d.owned||["Classic"]; currentColor=d.currentColor||"Classic";
+  stat_time=d.stat_time||0; stat_clicks=d.stat_clicks||0; stat_totalPoints=d.stat_totalPoints||0; stat_rebirths=d.stat_rebirths||0;
+  applyColor(); update();
+}
+
+
+// GAMEPLAY
+comet.onclick=()=>{
+  let g=clickValue*multiplier;
+  score+=g; stat_clicks++; stat_totalPoints+=g;
+  let r=comet.getBoundingClientRect();
+  floatText(g,r.left+40,r.top);
+  clickSound.play();
+  update(); save();
+};
+
+
+// UPGRADES
+upClick.onclick=()=>{ if(score>=priceClick){score-=priceClick; clickValue+=2; priceClick*=1.4; update(); save();}};
+upAuto.onclick=()=>{ if(score>=priceAuto){score-=priceAuto; autoValue+=1.5; priceAuto*=1.45; update(); save();}};
+upMega.onclick=()=>{ if(score>=priceMega){score-=priceMega; clickValue+=5; autoValue+=3; priceMega*=1.6; update(); save();}};
+upMegaClick.onclick=()=>{ if(score>=priceMegaClick){score-=priceMegaClick; clickValue+=10; priceMegaClick*=1.5; update(); save(); }};
+upSuperAuto.onclick=()=>{ if(score>=priceSuperAuto){score-=priceSuperAuto; autoValue+=20; priceSuperAuto*=1.55; update(); save(); }};
+upCosmicBoost.onclick=()=>{ if(score>=priceCosmicBoost){score-=priceCosmicBoost; multiplier*=2; priceCosmicBoost*=2.1; update(); save(); }};
+
+
+// REBIRTH
+rebirthBtn.onclick=()=>{
+  if(score>=rebirthPrice){
+    multiplier+=0.5;
+    rebirthPrice*=2;
+    score=0;
+    clickValue=5;
+    autoValue=1;
+    priceClick=5;
+    priceAuto=10;
+    priceMega=25;
+    stat_rebirths++;
+    update();
+    save();
+    alert("REBIRTH! Multiplier: "+multiplier+"x");
+  }
+};
+
+
+// AUTO INCOME
+setInterval(()=>{let g=autoValue*multiplier; score+=g; stat_totalPoints+=g; update(); save();},1000);
+setInterval(()=>{stat_time++; save();},1000);
+
+
+// STATS
+function openStats(){ statsPage.style.display='block'; let h=Math.floor(stat_time/3600), m=Math.floor(stat_time%3600/60), s=stat_time%60; s_time.textContent=h+"h "+m+"m "+s+"s"; s_clicks.textContent=stat_clicks; s_points.textContent=fNum(stat_totalPoints); s_rebirths.textContent=stat_rebirths; }
+function closeStats(){ statsPage.style.display='none'; }
+
+
+// FALLING STAR BONUS
+function spawnStar(){
+  let star=document.createElement('div');
+  star.style.width=star.style.height="20px";
+  star.style.background="yellow";
+  star.style.position="absolute";
+  star.style.top="0px";
+  star.style.left=Math.random()*(window.innerWidth-20)+"px";
+  star.style.borderRadius="50%";
+  document.body.appendChild(star);
+
+
+  let id=setInterval(()=>{
+    star.style.top=parseFloat(star.style.top)+5+"px";
+    if(parseFloat(star.style.top)>window.innerHeight-20){ document.body.removeChild(star); clearInterval(id); }
+  },16);
+
+
+  star.onclick=()=>{
+    score+=1000; stat_totalPoints+=1000; floatText(1000,parseFloat(star.style.left),parseFloat(star.style.top));
+    starSound.play(); document.body.removeChild(star); clearInterval(id); update(); save();
+  }
+}
+setInterval(spawnStar,35000);
+
+
+load();
+</script>
+</body>
+</html>
